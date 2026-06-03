@@ -84,6 +84,9 @@ const els = {
   actionArrow: document.querySelector("#actionArrow"),
   bridgeCount: document.querySelector("#bridgeCount"),
   bufferFill: document.querySelector("#bufferFill"),
+  gatePeople: document.querySelector("#gatePeople"),
+  bridgePeople: document.querySelector("#bridgePeople"),
+  seatedPeople: document.querySelector("#seatedPeople"),
   seatedCount: document.querySelector("#seatedCount"),
   simLog: document.querySelector("#simLog"),
 };
@@ -260,11 +263,25 @@ function resetSimulation() {
   renderSim("Ready", 0, 0);
 }
 
+function renderPeople(container, count, className, prefix, limit = 18) {
+  if (!container) return;
+  const shown = Math.min(count, limit);
+  const dots = Array.from({ length: shown }, (_, index) => {
+    const label = `${prefix}${index + 1}`;
+    return `<div class="person-dot ${className}" title="${label}">${index + 1}</div>`;
+  });
+  if (count > limit) dots.push(`<div class="person-more">+${count - limit}</div>`);
+  container.innerHTML = dots.join("");
+}
+
 function renderSim(action, arrivals, departed) {
   els.gateQueue.textContent = `${sim.gateQueue}명`;
   els.bridgeCount.textContent = `${sim.bridge}/${params.bridgeCapacity}명`;
   els.bufferFill.style.width = `${(sim.bridge / params.bridgeCapacity) * 100}%`;
   els.seatedCount.textContent = `${sim.seated}명`;
+  renderPeople(els.gatePeople, sim.gateQueue, "", "G", 12);
+  renderPeople(els.bridgePeople, sim.bridge, "bridge", "B", 37);
+  renderPeople(els.seatedPeople, sim.seated, "seated", "S", 12);
   els.actionArrow.textContent = action;
   els.actionArrow.classList.toggle("hold", action === "Hold");
   const minute = Math.floor(sim.time / 60);

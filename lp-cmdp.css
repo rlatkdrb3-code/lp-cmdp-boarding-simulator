@@ -301,6 +301,61 @@ button:hover {
   transition: width 220ms ease;
 }
 
+.people-strip,
+.bridge-people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 34px;
+  margin-top: 12px;
+}
+
+.bridge-people {
+  align-content: flex-start;
+  min-height: 60px;
+  padding: 8px;
+  border: 1px dashed #c8d7db;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.person-dot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--moving);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 900;
+  box-shadow: 0 8px 15px rgba(217, 60, 85, 0.18);
+}
+
+.person-dot.bridge {
+  background: var(--accent);
+  box-shadow: 0 8px 15px rgba(14, 124, 123, 0.16);
+}
+
+.person-dot.seated {
+  background: var(--seat-taken);
+  box-shadow: 0 8px 15px rgba(47, 111, 159, 0.16);
+}
+
+.person-more {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
 .sim-log {
   display: grid;
   gap: 8px;

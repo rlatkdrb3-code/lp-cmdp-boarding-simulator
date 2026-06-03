@@ -77,6 +77,7 @@
             <div class="node">
               <span>Gate Queue</span>
               <strong id="gateQueue">0명</strong>
+              <div class="people-strip" id="gatePeople" aria-label="게이트 대기 승객 표시"></div>
             </div>
             <div class="arrow" id="actionArrow">Release</div>
             <div class="buffer">
@@ -85,11 +86,13 @@
                 <strong id="bridgeCount">0/37명</strong>
               </div>
               <div class="buffer-track"><div id="bufferFill" class="buffer-fill"></div></div>
+              <div class="bridge-people" id="bridgePeople" aria-label="탑승교 승객 표시"></div>
             </div>
             <div class="arrow muted">Cabin</div>
             <div class="node">
               <span>Seated</span>
               <strong id="seatedCount">0명</strong>
+              <div class="people-strip seated" id="seatedPeople" aria-label="착석 완료 승객 표시"></div>
             </div>
           </div>
           <div class="sim-log" id="simLog"></div>
