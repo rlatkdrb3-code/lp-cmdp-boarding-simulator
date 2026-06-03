@@ -335,6 +335,12 @@ function interferenceFor(passenger, occupied) {
   return blockers.filter((candidate) => rowSeats.has(candidate)).length;
 }
 
+function seatInterferenceFor(passenger, occupied, strategy) {
+  const physicalBlockers = interferenceFor(passenger, occupied);
+  if (physicalBlockers > 0) return physicalBlockers;
+  return passenger.interferenceRoll < targetPInt(strategy) ? 1 : 0;
+}
+
 function seatedCount(sim) {
   if (!sim) return 0;
   let count = 0;
@@ -381,6 +387,7 @@ function createSimulation(strategy = state.strategy, animate = true, options = {
     wait: 0,
     bagDuration: 0,
     interference: 0,
+    interferenceRoll: random(),
   }));
 
   return {
@@ -462,11 +469,11 @@ function stepSimulation(sim) {
       }
 
       if (row === targetPosition) {
-        passenger.interference = interferenceFor(passenger, sim.seated);
+        passenger.interference = seatInterferenceFor(passenger, sim.seated, sim.strategy);
         passenger.bagDuration = calibratedBagSeconds(sim.strategy) + passenger.interference * 4 + Math.floor(passenger.tie * 3);
         passenger.wait = passenger.bagDuration;
         passenger.status = "loading";
-        sim.seatInterference += passenger.interference;
+        sim.seatInterference += passenger.interference > 0 ? 1 : 0;
         if (passenger.interference > 0) {
           addEvent(sim, `${passenger.label} 좌석 진입 중 ${passenger.interference}명 비켜섬`);
         }
