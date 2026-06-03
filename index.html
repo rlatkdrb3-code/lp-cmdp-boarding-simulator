@@ -18,7 +18,7 @@
         </div>
         <div class="summary-panel" aria-label="현재 시뮬레이션 요약">
           <div>
-            <span>총 탑승 시간</span>
+            <span>현재 실행 총 탑승 시간</span>
             <strong id="totalTime">0초</strong>
           </div>
           <div>
@@ -183,6 +183,13 @@
               <p>수정본 보고서 LP-CMDP 최종 gate-to-seat 시간</p>
             </div>
             <div id="comparisonChart" class="chart"></div>
+          </div>
+          <div class="chart-panel">
+            <div class="panel-title">
+              <h2>전체 탑승 완료시간</h2>
+              <p>좌석 이동 애니메이션 기준 263명 전원 착석 makespan, 30회 평균</p>
+            </div>
+            <div id="totalBoardingChart" class="chart"></div>
           </div>
           <div class="chart-panel">
             <div class="panel-title">

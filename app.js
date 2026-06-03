@@ -145,6 +145,7 @@ const els = {
   queue: document.querySelector("#queue"),
   aircraft: document.querySelector("#aircraft"),
   comparisonChart: document.querySelector("#comparisonChart"),
+  totalBoardingChart: document.querySelector("#totalBoardingChart"),
   controlComparison: document.querySelector("#controlComparison"),
   events: document.querySelector("#events"),
   strategyNote: document.querySelector("#strategyNote"),
@@ -971,6 +972,40 @@ function renderComparison(results) {
   }
 }
 
+function totalBoardingResults() {
+  return Object.keys(strategyNames)
+    .map((strategy) => {
+      const releaseRate = optimalReleaseByStrategy[strategy] || optimalReleaseByStrategy.random;
+      const summary = summarizeReplications(strategy, {
+        arrivalRate: state.arrivalRate,
+        releaseRate,
+        holdThreshold: null,
+      });
+      return {
+        strategy,
+        time: summary.time,
+        timeStdev: summary.timeStdev,
+      };
+    })
+    .sort((a, b) => a.time - b.time);
+}
+
+function renderTotalBoardingComparison(results) {
+  if (!els.totalBoardingChart) return;
+  const maxTime = Math.max(...results.map((result) => result.time), 1);
+  els.totalBoardingChart.innerHTML = "";
+  for (const result of results) {
+    const row = document.createElement("div");
+    row.className = "bar-row";
+    row.innerHTML = `
+      <div class="bar-label">${strategyNames[result.strategy]}</div>
+      <div class="bar-track"><div class="bar" style="width: ${(result.time / maxTime) * 100}%"></div></div>
+      <div class="bar-value">${(result.time / 60).toFixed(1)}분 ± ${(result.timeStdev / 60).toFixed(1)}분</div>
+    `;
+    els.totalBoardingChart.appendChild(row);
+  }
+}
+
 function compareStrategies() {
   const results = Object.keys(strategyNames)
     .map((strategy) => ({
@@ -983,6 +1018,7 @@ function compareStrategies() {
     .sort((a, b) => a.time - b.time);
 
   renderComparison(results);
+  renderTotalBoardingComparison(totalBoardingResults());
   renderControlComparison();
 }
 
