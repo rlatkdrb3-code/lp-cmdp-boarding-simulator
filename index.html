@@ -3,151 +3,303 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LP-CMDP 탑승 방출 제어 시뮬레이터</title>
-    <link rel="stylesheet" href="lp-cmdp.css" />
+    <title>비행기 탑승 대기행렬 시뮬레이터</title>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="shell">
       <section class="hero">
         <div>
-          <p class="eyebrow">Finite Queueing Network · LP-CMDP</p>
-          <h1>B777-300ER Gate-to-Seat 최적화</h1>
+          <p class="eyebrow">Queueing Theory Boarding Lab</p>
+          <h1>비행기 좌석 배정 방식별 탑승 시뮬레이터</h1>
           <p class="lead">
-            새 보고서의 직렬 유한 대기행렬 네트워크와 LP-CMDP 결과를 기준으로 Random, Reverse Pyramid, WilMA의 방출률과 평균 gate-to-seat 시간을 비교합니다.
+            대한항공 B777-300ER 277석형 보고서 값을 기준으로 게이트 NHPP 피크 근사, 탑승교 30m 유한 버퍼, 기내 복도와 좌석 착석 과정을 연결해 비교합니다.
           </p>
         </div>
-        <div class="summary-panel">
+        <div class="summary-panel" aria-label="현재 시뮬레이션 요약">
           <div>
-            <span>최적 정책</span>
-            <strong id="bestPolicy">WilMA</strong>
+            <span>총 탑승 시간</span>
+            <strong id="totalTime">0초</strong>
           </div>
           <div>
-            <span>평균 시간</span>
-            <strong id="bestTime">9.37분</strong>
+            <span>통로 정체</span>
+            <strong id="blockedTicks">0회</strong>
           </div>
           <div>
-            <span>Random 대비</span>
-            <strong id="bestGain">27.1% 감소</strong>
+            <span>좌석 간섭</span>
+            <strong id="seatInterference">0회</strong>
+          </div>
+          <div>
+            <span>게이트 Hold/Blocking</span>
+            <strong id="bufferBlockTime">0초</strong>
           </div>
         </div>
       </section>
 
-      <section class="layout">
-        <aside class="controls" aria-label="LP-CMDP 설정">
-          <h2>기준 시나리오</h2>
-          <label>
-            탑승 정책
-            <select id="policy">
-              <option value="random">Random Boarding</option>
-              <option value="reverse">Reverse Pyramid</option>
-              <option value="wilma" selected>WilMA Boarding</option>
-            </select>
-          </label>
-          <label>
-            피크 도착률 λ_peak
-            <input id="lambdaPeak" type="range" min="16.57" max="20.25" value="18.41" step="0.01" />
-            <span class="range-readout"><span id="lambdaPeakLabel">18.41</span>명/분</span>
-          </label>
-          <label>
-            제어 주기 Δt
-            <select id="decisionInterval">
-              <option value="5">5초</option>
-              <option value="10" selected>10초</option>
-              <option value="20">20초</option>
-            </select>
-          </label>
-          <label>
-            기내 처리율 보정
-            <select id="capacityScale">
-              <option value="0.9">-10%</option>
-              <option value="1" selected>기준</option>
-              <option value="1.1">+10%</option>
-            </select>
-          </label>
-          <button id="restartBtn" type="button">상태 시뮬레이션 재시작</button>
-        </aside>
-
+      <section class="workspace">
         <section class="sim-area">
-        <section class="chart-panel sim-card">
-          <div class="panel-title">
-            <h2>LP-CMDP 상태 시뮬레이션</h2>
-            <p>10초 단위 Release/Hold 근사</p>
+          <div class="legend" aria-label="범례">
+            <span><i class="legend-seat empty"></i>빈 좌석</span>
+            <span><i class="legend-seat taken"></i>착석 완료</span>
+            <span><i class="legend-dot moving"></i>이동 중</span>
+            <span><i class="legend-dot loading"></i>짐 싣는 중</span>
           </div>
-          <div class="flow">
-            <div class="node">
-              <span>Gate Queue</span>
-              <strong id="gateQueue">0명</strong>
-              <div class="people-strip" id="gatePeople" aria-label="게이트 대기 승객 표시"></div>
+          <div id="flowView" class="flow-view" aria-label="게이트부터 기내 좌석까지 좌우 진행 흐름"></div>
+          <div class="aircraft-wrap">
+            <div id="queue" class="queue" aria-label="탑승 대기열"></div>
+            <div class="jetbridge" aria-label="탑승교">
+              <span>탑승교</span>
+              <strong>30m</strong>
+              <small>보고서 보행 40초</small>
             </div>
-            <div class="arrow" id="actionArrow">Release</div>
-            <div class="buffer">
-              <div class="buffer-head">
-                <span>Jet Bridge q_t</span>
-                <strong id="bridgeCount">0/37명</strong>
-              </div>
-              <div class="buffer-track"><div id="bufferFill" class="buffer-fill"></div></div>
-              <div class="bridge-people" id="bridgePeople" aria-label="탑승교 승객 표시"></div>
-            </div>
-            <div class="arrow muted">Cabin</div>
-            <div class="node">
-              <span>Seated</span>
-              <strong id="seatedCount">0명</strong>
-              <div class="people-strip seated" id="seatedPeople" aria-label="착석 완료 승객 표시"></div>
-            </div>
+            <div id="aircraft" class="aircraft" aria-label="항공기 좌석 배치"></div>
           </div>
-          <div class="sim-log" id="simLog"></div>
         </section>
-        </section>
+
+        <aside class="controls" aria-label="시뮬레이션 설정">
+          <h2>탑승 조건</h2>
+
+          <label>
+            탑승 방식
+            <select id="strategy">
+              <option value="random">랜덤 탑승</option>
+              <option value="reversePyramid">Reverse Pyramid</option>
+              <option value="wilma" selected>WilMA: 창가-중간-통로</option>
+            </select>
+          </label>
+
+          <label>
+            좌석 점유율
+            <input id="loadFactor" type="range" min="40" max="100" value="95" step="1" />
+            <span class="range-readout"><span id="loadFactorLabel">95</span>% · 보고서 노쇼 5%</span>
+          </label>
+
+          <label>
+            행 수
+            <input id="rows" type="range" min="31" max="31" value="31" step="1" disabled />
+            <span class="range-readout">3-3-3 단순화 1~31행, 277석</span>
+          </label>
+
+          <label>
+            수하물 적재시간 E[T_L]
+            <input id="bagTime" type="range" min="15" max="15" value="15" step="1" disabled />
+            <span class="range-readout">보고서 기준 <span id="bagTimeLabel">15</span>초</span>
+          </label>
+
+          <label>
+            순서 이탈률 α
+            <select id="alphaRate">
+              <option value="0">0%</option>
+              <option value="15" selected>15%</option>
+              <option value="25">25%</option>
+              <option value="30">30%</option>
+              <option value="50">50%</option>
+              <option value="100">100%</option>
+            </select>
+            <span class="range-readout"><span id="alphaRateLabel">15</span>% · 보고서 표 기준</span>
+          </label>
+
+          <label>
+            기내 처리능력 모드
+            <select id="capacityMode">
+              <option value="alpha">α로 계산</option>
+              <option value="manual">직접 조절</option>
+            </select>
+            <span class="range-readout">WilMA/정렬형 방식에 적용</span>
+          </label>
+
+          <label>
+            수동 WilMA 처리능력
+            <input id="manualCabinCapacity" type="range" min="6" max="8" value="7.62" step="0.01" />
+            <span class="range-readout"><span id="manualCabinCapacityLabel">7.62</span>명/분 · 랜덤 6.00, Reverse 7.28</span>
+          </label>
+
+          <h2>게이트 NHPP/M/2/K</h2>
+
+          <label>
+            도착률 λ
+            <input id="arrivalRate" type="range" min="4" max="30" value="18.41" step="0.01" />
+            <span class="range-readout"><span id="arrivalRateLabel">18.41</span>명/분 · peak</span>
+          </label>
+
+          <label>
+            창구별 서비스율 μ
+            <input id="serviceRate" type="range" min="3" max="15" value="10" step="1" />
+            <span class="range-readout"><span id="serviceRateLabel">10</span>명/분</span>
+          </label>
+
+          <label>
+            탑승교 구조
+            <input id="gateServers" type="range" min="2" max="2" value="2" step="1" disabled />
+            <span class="range-readout">창구 2개, 탑승교 30m, 보행 40초, 버퍼 37명</span>
+          </label>
+
+          <label>
+            애니메이션 속도
+            <input id="speed" type="range" min="1" max="10" value="5" step="1" />
+            <span class="range-readout"><span id="speedLabel">5</span>x</span>
+          </label>
+
+          <div class="button-row">
+            <button id="runBtn" type="button">시작</button>
+            <button id="pauseBtn" type="button" class="secondary">일시정지</button>
+            <button id="resetBtn" type="button" class="secondary">초기화</button>
+          </div>
+
+          <button id="compareBtn" type="button" class="wide">3개 정책 비교</button>
+        </aside>
       </section>
 
       <section class="analytics">
         <div class="analytics-column">
-        <div class="chart-panel">
-          <div class="panel-title">
-            <h2>정책별 기내 처리율</h2>
-            <p>S = 15 + 10p_int</p>
+          <div class="chart-panel">
+            <div class="panel-title">
+              <h2>NHPP 게이트 분석</h2>
+              <p>피크 구간 λ(t)=18.41을 M/M/2로 근사</p>
+            </div>
+            <div class="mm-grid">
+              <div>
+                <span>이용률 ρ</span>
+                <strong id="rhoValue">0.00</strong>
+              </div>
+              <div>
+                <span>평균 대기열 Lq</span>
+                <strong id="lqValue">0.0명</strong>
+              </div>
+              <div>
+                <span>평균 대기시간 Wq</span>
+                <strong id="wqValue">0.0초</strong>
+              </div>
+              <div>
+                <span>기내 방출 간격</span>
+                <strong id="releaseValue">0.0초</strong>
+              </div>
+            </div>
+            <p id="mmNote" class="model-note"></p>
           </div>
-          <div class="metric-grid">
-            <div><span>좌석 간섭확률 p_int</span><strong id="pIntValue">0.075</strong></div>
-            <div><span>평균 병목시간 E[S]</span><strong id="serviceTimeValue">15.75초</strong></div>
-            <div><span>단일 통로 μ_aisle</span><strong id="aisleMuValue">3.81명/분</strong></div>
-            <div><span>전체 처리율 μ_cabin</span><strong id="cabinMuValue">7.62명/분</strong></div>
+          <div class="chart-panel">
+            <div class="panel-title">
+              <h2>방식별 비교</h2>
+              <p>수정본 보고서 LP-CMDP 최종 gate-to-seat 시간</p>
+            </div>
+            <div id="comparisonChart" class="chart"></div>
           </div>
-        </div>
-
-        <div class="chart-panel">
-          <div class="panel-title">
-            <h2>LP-CMDP 최적 방출</h2>
-            <p>ε=0.01, B=37</p>
+          <div class="chart-panel">
+            <div class="panel-title">
+              <h2>기내 Pure Death</h2>
+              <p>미착석 승객 수 N→0 전이 추적</p>
+            </div>
+            <div class="death-grid">
+              <div>
+                <span>전체 승객 N</span>
+                <strong id="totalPassengersValue">0명</strong>
+              </div>
+              <div>
+                <span>현재 미착석 n</span>
+                <strong id="remainingPassengersValue">0명</strong>
+              </div>
+              <div>
+                <span>최근 μₙ</span>
+                <strong id="currentMuValue">-</strong>
+              </div>
+              <div>
+                <span>평균 전이시간</span>
+                <strong id="avgTransitionValue">-</strong>
+              </div>
+            </div>
+            <div id="ltChart" class="lt-chart" aria-label="시간에 따른 미착석 승객 수 그래프"></div>
+            <p class="model-note">승객이 착석할 때마다 n→n−1 전이시간을 기록하고, μₙ=1/E[전이시간]으로 추정합니다.</p>
           </div>
-          <div class="metric-grid">
-            <div><span>최적 방출률 λ_c*</span><strong id="releaseRateValue">7.52명/분</strong></div>
-            <div><span>평균 탑승교 인원 E[q]</span><strong id="eqValue">6.02명</strong></div>
-            <div><span>Hold 비율</span><strong id="holdShareValue">59.2%</strong></div>
-            <div><span>기내 안정도 λ_c*/μ_cabin</span><strong id="stabilityValue">0.99</strong></div>
-          </div>
-        </div>
-
         </div>
         <div class="analytics-column">
-        <div class="chart-panel">
+          <div class="chart-panel">
           <div class="panel-title">
-            <h2>평균 Gate-to-Seat 시간</h2>
-            <p>W_gate + scan + bridge + W_bridge + cabin</p>
+            <h2>보고서 변수</h2>
+            <p>취소선 제외 수정본 기준</p>
           </div>
-          <div id="componentChart" class="component-chart"></div>
+          <div class="death-grid">
+            <div>
+              <span>보고서 탑승객 K</span>
+              <strong id="reportKValue">263명</strong>
+            </div>
+            <div>
+              <span>시각화 탑승객</span>
+              <strong id="visualKValue">0명</strong>
+            </div>
+            <div>
+              <span>탑승교 버퍼 B</span>
+              <strong id="bufferValue">37명</strong>
+            </div>
+            <div>
+              <span>LP-CMDP λ_c*</span>
+              <strong id="holdThresholdValue">7.52명/분</strong>
+            </div>
+            <div>
+              <span>현재 정책 λ_c*</span>
+              <strong id="controlledLambdaValue">7.52명/분</strong>
+            </div>
+            <div>
+              <span>랜덤 P37</span>
+              <strong id="randomBlockValue">60.5%</strong>
+            </div>
+            <div>
+              <span>WilMA P37</span>
+              <strong id="wilmaBlockValue">50.3%</strong>
+            </div>
+            <div>
+              <span>순서 이탈률 α</span>
+              <strong id="alphaValue">15%</strong>
+            </div>
+            <div>
+              <span>좌석 간섭 확률 p_int</span>
+              <strong id="seatIntProbabilityValue">0.075</strong>
+            </div>
+            <div>
+              <span>평균 통로 점유 E[S]</span>
+              <strong id="aisleServiceValue">13.125초</strong>
+            </div>
+            <div>
+              <span>정렬형 2μ_eff</span>
+              <strong id="totalCabinCapacityValue">7.62명/분</strong>
+            </div>
+            <div>
+              <span>현재 방식 적용 처리능력</span>
+              <strong id="currentAppliedCapacityValue">7.28명/분</strong>
+            </div>
+            <div>
+              <span>현재 탑승교 인원</span>
+              <strong id="bridgeOccupancyValue">0/37명</strong>
+            </div>
+            <div>
+              <span>LP-CMDP Hold 비율</span>
+              <strong id="releaseHoldShareValue">0.0%</strong>
+            </div>
+            <div>
+              <span>B=37 Blocking 비율</span>
+              <strong id="bufferBlockShareValue">0.0%</strong>
+            </div>
+          </div>
+          <p class="model-note">등급 구분 없이 277석 전체를 같은 탑승객 좌석으로 처리하며, 95% 탑승률이면 K=263명으로 시뮬레이션합니다.</p>
         </div>
-
         <div class="chart-panel">
           <div class="panel-title">
-            <h2>정책 조합 비교</h2>
-            <p>보고서 LP-CMDP 기준값</p>
+            <h2>방출 제어 전후</h2>
+            <p>무통제 불안정 상태와 LP-CMDP 제어 결과</p>
           </div>
-          <div id="policyChart" class="bar-chart"></div>
+          <div id="controlComparison" class="control-compare"></div>
+          <p class="model-note">애니메이션은 기존 UI를 이용한 흐름 시각화이고, 아래 비교값은 수정본 보고서의 LP-CMDP 산출표를 기준으로 표시합니다.</p>
+        </div>
+        <div class="chart-panel">
+          <div class="panel-title">
+            <h2>현재 방식 해석</h2>
+            <p id="strategyNote">시작 버튼을 눌러 통로 병목을 관찰하세요.</p>
+          </div>
+          <div id="events" class="events"></div>
         </div>
         </div>
       </section>
     </main>
-    <script src="lp-cmdp.js"></script>
+
+    <script src="app.js"></script>
   </body>
 </html>
