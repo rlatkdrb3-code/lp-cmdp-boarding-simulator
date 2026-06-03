@@ -195,6 +195,11 @@ function rowBand(row) {
   return 2;
 }
 
+function reversePyramidScore(passenger) {
+  const distanceFromBack = lastAircraftRow - passenger.row;
+  return distanceFromBack + seatType(passenger.seat) * 6;
+}
+
 function buildAircraftSeats() {
   const seats = [];
 
@@ -314,8 +319,8 @@ function orderPassengers(passengers, strategy, rows, random) {
   if (strategy === "random") return shuffle(withTie, random);
   if (strategy === "reversePyramid") {
     return withTie.sort((a, b) => {
-      const bandDiff = rowBand(a.row) - rowBand(b.row);
-      return bandDiff || seatType(a.seat) - seatType(b.seat) || b.row - a.row || a.tie - b.tie;
+      const scoreDiff = reversePyramidScore(a) - reversePyramidScore(b);
+      return scoreDiff || seatType(a.seat) - seatType(b.seat) || b.row - a.row || a.tie - b.tie;
     });
   }
   return withTie.sort((a, b) => seatType(a.seat) - seatType(b.seat) || a.tie - b.tie);
