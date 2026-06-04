@@ -826,7 +826,7 @@ button.wide {
 
 .bar-row {
   display: grid;
-  grid-template-columns: 150px minmax(140px, 1fr) 185px;
+  grid-template-columns: 150px minmax(140px, 1fr) 215px;
   gap: 10px;
   align-items: center;
 }
@@ -854,7 +854,13 @@ button.wide {
   font-size: 0.86rem;
   font-weight: 800;
   text-align: right;
-  white-space: nowrap;
+  line-height: 1.35;
+}
+
+.bar-value small {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
 }
 
 .events {

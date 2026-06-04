@@ -997,6 +997,7 @@ function totalBoardingResults() {
         strategy,
         time: summary.time,
         timeStdev: summary.timeStdev,
+        releaseFloor: (reportPassengerCount / releaseRate) * 60,
       };
     })
     .sort((a, b) => a.time - b.time);
@@ -1012,7 +1013,7 @@ function renderTotalBoardingComparison(results) {
     row.innerHTML = `
       <div class="bar-label">${strategyNames[result.strategy]}</div>
       <div class="bar-track"><div class="bar" style="width: ${(result.time / maxTime) * 100}%"></div></div>
-      <div class="bar-value">${(result.time / 60).toFixed(1)}분 ± ${(result.timeStdev / 60).toFixed(1)}분</div>
+      <div class="bar-value">${(result.time / 60).toFixed(1)}분 ± ${(result.timeStdev / 60).toFixed(1)}분<br><small>방출 최소 ${(result.releaseFloor / 60).toFixed(1)}분</small></div>
     `;
     els.totalBoardingChart.appendChild(row);
   }

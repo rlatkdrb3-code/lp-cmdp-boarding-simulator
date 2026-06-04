@@ -186,10 +186,11 @@
           </div>
           <div class="chart-panel">
             <div class="panel-title">
-              <h2>전체 탑승 완료시간</h2>
-              <p>좌석 이동 애니메이션 기준 263명 전원 착석 makespan, 30회 평균</p>
+              <h2>전체 탑승 완료시간 보조지표</h2>
+              <p>λ_c* 평균 방출률을 애니메이션에 적용한 makespan, 보고서 최적화 목표와는 별도</p>
             </div>
             <div id="totalBoardingChart" class="chart"></div>
+            <p class="model-note">WilMA도 λ_c*=7.52명/분이면 263명 방출 자체에 최소 35.0분이 걸립니다. 따라서 이 그래프는 운영상 완료시간 꼬리를 보는 보조지표이고, 보고서의 핵심 비교는 위 gate-to-seat 평균 시간입니다.</p>
           </div>
           <div class="chart-panel">
             <div class="panel-title">
